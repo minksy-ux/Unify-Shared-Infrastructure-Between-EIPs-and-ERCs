@@ -1,0 +1,25 @@
+name: Shared Lint
+
+on:
+  workflow_call:
+    inputs:
+      eipw_config:
+        description: Path to eipw config in caller repo
+        required: false
+        default: infra/shared/config/eipw.toml
+        type: string
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Verify shared config
+        run: test -f "${{ inputs.eipw_config }}"
+
+      - name: Run eipw lint
+        run: eipw --config "${{ inputs.eipw_config }}"

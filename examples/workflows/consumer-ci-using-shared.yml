@@ -1,0 +1,29 @@
+name: Consumer CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    # Replace owner/repo with your shared infra repository.
+    uses: ethereum/eip-infra/.github/workflows/lint.yml@v1
+    with:
+      eipw_config: infra/shared/config/eipw.toml
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Verify pinned shared commit
+        run: |
+          test -d infra/shared
+          git -C infra/shared rev-parse --short HEAD
+
+      - name: Build site
+        run: bundle exec jekyll build --config _config.yml,infra/shared/_config.yml
