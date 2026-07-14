@@ -80,11 +80,12 @@ jobs:
       - name: Fetch PR Number
         id: fetch-pr-number
         continue-on-error: true
-        uses: dawidd6/action-download-artifact@246dbf436b23d7c49e21a7ab8204ca9ecd1fe615
+        uses: actions/download-artifact@v4
         with:
           name: pr-number
-          workflow: auto-review-trigger.yml
-          run_id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          path: .
 
       - name: Check PR file existence
         id: check_pr_number

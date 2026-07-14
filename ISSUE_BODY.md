@@ -237,3 +237,56 @@ See [bootstrap.sh](bootstrap.sh) for a ready-to-run bootstrap helper.
 2. Move one safe file (for example `_includes/header.html`), add submodule in both repos, and wire Jekyll path.
 3. Replace one CI merge step with submodule checkout and re-enable one previously disabled lint rule.
 4. Add shared release/tag workflow and a bot PR that updates consumer pinned tag.
+
+## Appendix: Node 24-safe Fix for Auto Review Artifact Download
+
+If maintainers also want to fix the recent `pr-number` artifact failures caused by the deprecated Node 20 downloader action, use the following patch in `auto-review-bot.yml`.
+
+```yaml
+- name: Fetch PR Number
+	id: fetch-pr-number
+	continue-on-error: true
+	uses: actions/download-artifact@v4
+	with:
+		name: pr-number
+		run-id: ${{ github.event.workflow_run.id }}
+		github-token: ${{ github.token }}
+		path: .
+
+- name: Check PR file existence
+	id: check_pr_number
+	run: |
+		if [[ -f pr-number.txt ]]; then
+			echo "pr_path=pr-number.txt" >> "$GITHUB_OUTPUT"
+			echo "exists=true" >> "$GITHUB_OUTPUT"
+		elif [[ -f pr-number/pr-number.txt ]]; then
+			echo "pr_path=pr-number/pr-number.txt" >> "$GITHUB_OUTPUT"
+			echo "exists=true" >> "$GITHUB_OUTPUT"
+		else
+			echo "exists=false" >> "$GITHUB_OUTPUT"
+		fi
+
+- name: Save PR Number
+	if: steps.check_pr_number.outputs.exists == 'true'
+	id: save-pr-number
+	run: echo "pr=$(cat \"${{ steps.check_pr_number.outputs.pr_path }}\")" >> "$GITHUB_OUTPUT"
+
+- name: No-op when artifact missing
+	if: steps.check_pr_number.outputs.exists != 'true'
+	run: echo "No pr-number artifact for this trigger path; exiting successfully."
+
+- name: Auto Review Bot
+	if: steps.check_pr_number.outputs.exists == 'true'
+	id: auto-review-bot
+	uses: ethereum/eip-review-bot@dist
+	continue-on-error: true
+	with:
+		token: ${{ secrets.TOKEN }}
+		config: config/eip-editors.yml
+		pr_number: ${{ steps.save-pr-number.outputs.pr }}
+```
+
+This does two things:
+
+- removes dependence on a Node 20-based action
+- turns missing artifacts into a clean no-op instead of a failed run
