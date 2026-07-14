@@ -129,3 +129,12 @@ For example, if `issue_comment` is only useful with `@eth-bot rerun`, keep that 
 ### Summary
 
 The solution is to make `auto-review-bot.yml` conditional on the artifact actually being present, because `auto-review-trigger.yml` can succeed without creating `pr-number`. The most targeted fix is to make artifact download non-fatal and skip the remaining steps when `pr-number.txt` is absent.
+
+## Implementation status in this repository
+
+The repository currently implements the no-op behavior for missing PR-number artifacts:
+
+- `.github/workflows/auto-review-bot.yml` uses `continue-on-error: true` for artifact download, checks for `pr-number.txt`, and skips bot execution when absent.
+- `.github/workflows/auto-review-trigger.yml` uploads the `pr-number` artifact only when `pr-number.txt` exists, and logs a no-op message otherwise.
+
+Result: trigger runs that do not produce a PR number complete successfully without causing false-negative bot failures.
