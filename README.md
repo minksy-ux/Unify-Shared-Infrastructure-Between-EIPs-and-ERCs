@@ -136,5 +136,7 @@ The repository currently implements the no-op behavior for missing PR-number art
 
 - `.github/workflows/auto-review-bot.yml` uses `continue-on-error: true` for artifact download, checks for `pr-number.txt`, and skips bot execution when absent.
 - `.github/workflows/auto-review-trigger.yml` uploads the `pr-number` artifact only when `pr-number.txt` exists, and logs a no-op message otherwise.
+- `.github/workflows/auto-review-bot.yml` uses `actions/download-artifact@v4` (Node 24-compatible) instead of the deprecated Node 20-based downloader.
+- `.github/workflows/auto-review-bot.yml` grants `actions: read` permission so the `workflow_run` job can download artifacts from the triggering run.
 
 Result: trigger runs that do not produce a PR number complete successfully without causing false-negative bot failures.
